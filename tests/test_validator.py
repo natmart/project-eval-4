@@ -217,7 +217,8 @@ class TestNormalizeURL:
         """Test normalization of complex URLs."""
         url = "HTTPS://EXAMPLE.COM:8080/Path/Sub/?q=1#section"
         normalized = normalize_url(url)
-        assert normalized == "https://example.com:8080/Path/Sub/?q=1"
+        # The trailing slash is removed correctly before the query string
+        assert normalized == "https://example.com:8080/Path/Sub?q=1"
 
 
 class TestGetURLComponents:
@@ -312,3 +313,71 @@ class TestDefaultBlockedDomains:
         assert "malicious-site.com" in DEFAULT_BLOCKED_DOMAINS
         assert "spam.example" in DEFAULT_BLOCKED_DOMAINS
         assert "phishing.net" in DEFAULT_BLOCKED_DOMAINS
+
+
+# Specific tests as per acceptance criteria
+
+def test_scheme_validation():
+    """Test scheme validation (http/https)."""
+    # Test valid schemes
+    assert validate_url("https://example.com") is True
+    assert validate_url("http://example.com") is True
+    assert validate_url("https://sub.example.com/path") is True
+    
+    # Test invalid schemes
+    assert validate_url("ftp://example.com") is False
+    assert validate_url("javascript:alert('xss')") is False
+    assert validate_url("data:text/plain,hello") is False
+    
+    # Test missing scheme
+    assert validate_url("example.com") is False
+
+
+def test_domain_blocking():
+    """Test blocked domains."""
+    # Test default blocked domains
+    assert is_domain_blocked("https://malicious-site.com") is True
+    assert is_domain_blocked("http://spam.example/path") is True
+    assert is_domain_blocked("https://phishing.net") is True
+    
+    # Test subdomain blocking
+    assert is_domain_blocked("https://sub.malicious-site.com") is True
+    
+    # Test safe domains
+    assert is_domain_blocked("https://example.com") is False
+    assert is_domain_blocked("https://google.com") is False
+    
+    # Test custom blocked domains
+    custom_blocked = {"bad.com", "evil.net"}
+    assert is_domain_blocked("https://bad.com", blocked_domains=custom_blocked) is True
+    assert is_domain_blocked("https://good.com", blocked_domains=custom_blocked) is False
+
+
+def test_url_normalization():
+    """Test URL normalization with various input formats."""
+    # Test adding default scheme
+    assert normalize_url("example.com") == "https://example.com"
+    assert normalize_url("example.com/path") == "https://example.com/path"
+    
+    # Test lowercasing domain
+    assert normalize_url("https://EXAMPLE.COM") == "https://example.com"
+    assert normalize_url("HTTP://SUB.EXAMPLE.COM") == "http://sub.example.com"
+    
+    # Test removing trailing slashes
+    assert normalize_url("https://example.com/") == "https://example.com"
+    assert normalize_url("https://example.com/path/") == "https://example.com/path"
+    
+    # Test removing fragments
+    assert normalize_url("https://example.com#section") == "https://example.com"
+    
+    # Test preserving ports
+    assert normalize_url("https://example.com:8080") == "https://example.com:8080"
+    
+    # Test complex normalization
+    url = "HTTPS://EXAMPLE.COM:8080/PATH/?q=1#section"
+    assert normalize_url(url) == "https://example.com:8080/PATH?q=1"
+    
+    # Test invalid URLs
+    assert normalize_url("") is None
+    assert normalize_url(None) is None
+    assert normalize_url("not-a-valid-url") is None
