@@ -26,6 +26,12 @@ from pyshort.generator import (
     decode_base62,
 )
 
+# Import API components
+from pyshort.api import URLShortener
+from pyshort.storage import InMemoryStorage
+from pyshort.stats import StatsTracker
+
+
 __all__ = [
     # Version
     "__version__",
@@ -45,4 +51,8 @@ __all__ = [
     "generate_custom_code",
     "encode_base62",
     "decode_base62",
+    # API components
+    "URLShortener",
+    "InMemoryStorage",
+    "StatsTracker",
 ]
