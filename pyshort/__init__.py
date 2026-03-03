@@ -4,6 +4,15 @@ pyshort - A simple URL shortener application
 
 __version__ = "0.1.0"
 
+# Import API
+from pyshort.api import URLShortener
+
+# Import storage
+from pyshort.storage import InMemoryStorage
+
+# Import stats
+from pyshort.stats import StatsTracker
+
 # Import models
 from pyshort.models import ShortURL, validate_url
 
@@ -29,6 +38,12 @@ from pyshort.generator import (
 __all__ = [
     # Version
     "__version__",
+    # Main API
+    "URLShortener",
+    # Storage
+    "InMemoryStorage",
+    # Stats
+    "StatsTracker",
     # Models
     "ShortURL",
     "validate_url",
