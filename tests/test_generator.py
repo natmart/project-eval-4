@@ -201,7 +201,7 @@ class TestDecodeBase62:
     def test_uppercase_letters(self):
         """Test decoding A-Z"""
         assert decode_base62("A") == 36
-        assert decode_b62("B") == 37
+        assert decode_base62("B") == 37
         assert decode_base62("Z") == 61
     
     def test_multi_char(self):
@@ -225,7 +225,7 @@ class TestDecodeBase62:
             decode_base62("abc!")
         
         with pytest.raises(ValueError, match="Invalid base62 character"):
-            decode_b62("hello world")
+            decode_base62("hello world")
     
     def test_roundtrip(self):
         """Test that encode then decode returns original number"""
