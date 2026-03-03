@@ -78,21 +78,29 @@ def validate_url(url: str, allowed_schemes: Optional[List[str]] = None) -> bool:
         if domain.startswith('-') or domain.endswith('-'):
             return False
         
+        # Check each label in the domain (split by dots)
+        for label in domain.split('.'):
+            if not label:  # Empty label (e.g., ".." or "example..com")
+                return False
+            if label.startswith('-') or label.endswith('-'):  # Label cannot start/end with hyphen
+                return False
+        
         return True
         
     except Exception:
         return False
 
 
-def extract_domain(url: str) -> Optional[str]:
+def extract_domain(url: str, lowercase: bool = True) -> Optional[str]:
     """
     Extract the domain from a URL string.
     
     Args:
         url: The URL string to extract domain from
+        lowercase: Whether to convert domain to lowercase (default: True)
         
     Returns:
-        The domain name (lowercase, without port) or None if invalid
+        The domain name (lowercase if requested, without port) or None if invalid
         
     Examples:
         >>> extract_domain("https://example.com/path")
@@ -111,8 +119,10 @@ def extract_domain(url: str) -> Optional[str]:
         if not parsed.netloc:
             return None
         
-        # Remove port and convert to lowercase
-        domain = parsed.netloc.split(':')[0].lower()
+        # Remove port and optionally convert to lowercase
+        domain = parsed.netloc.split(':')[0]
+        if lowercase:
+            domain = domain.lower()
         
         return domain
         
@@ -147,7 +157,8 @@ def is_domain_blocked(
     if blocked_domains is None:
         blocked_domains = DEFAULT_BLOCKED_DOMAINS
     
-    domain = extract_domain(url)
+    # Extract domain without lowercasing if case_sensitive
+    domain = extract_domain(url, lowercase=not case_sensitive)
     
     if not domain:
         return False
@@ -181,7 +192,7 @@ def normalize_url(
     - Adding default scheme if missing
     - Converting domain to lowercase
     - Removing fragments
-    - Removing trailing slash from path (unless root)
+    - Removing trailing slash from path
     
     Args:
         url: The URL string to normalize
@@ -235,10 +246,11 @@ def normalize_url(
             domain_parts[0] = domain_parts[0].lower()
             netloc = ':'.join(domain_parts)
         
-        # Get path and normalize (remove trailing slash unless it's the only path)
+        # Get path and normalize (remove trailing slash)
         path = parsed.path
-        if path and path != '/' and path.endswith('/'):
+        if path and path.endswith('/'):
             path = path.rstrip('/')
+            # If path becomes empty, use empty string (will be handled by urlunparse)
         
         # Reconstruct URL without fragment
         normalized = urlunparse((
